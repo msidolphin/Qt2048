@@ -7,24 +7,22 @@
 #include <QPaintEvent>
 #include <QMap>
 #include <QEvent>
-
 #include <QDebug>
-
 #include <ctime>
 #include <random>
 
-#include <iostream>
-
-using namespace std;
-
-
 GameWidget::GameWidget(QWidget *parent)
-    : QOpenGLWidget(parent)
+    : QWidget(parent)
 {
     srand(time(nullptr));
 
     //分数初始化为0
     score = 0;
+
+    //设置背景色
+    QPalette pal = palette();
+    pal.setColor(QPalette::Background, QColor("#FAF8F0"));
+    setPalette(pal);
 
     //初始化背景颜色
     backgroundColor.insert(QString::number(0),      QColor::fromRgb(0xab, 0xa5, 0x8d));
@@ -42,8 +40,6 @@ GameWidget::GameWidget(QWidget *parent)
 
     //初始化border为0
     memset(border, 0, sizeof(int) * 16);
-
-
 
     //随机生成两个2个4
     random(2, 4);
@@ -68,6 +64,9 @@ void GameWidget::paintEvent(QPaintEvent *event) {
 
     QPainter painter(this);
 
+    //画笔设置为空，不绘制边框
+    painter.setPen(Qt::NoPen);
+
     QBrush brush(QColor::fromRgb(141, 121, 81));
     painter.setBrush(brush);
     painter.drawRect(2, 2, width() - 4, height() - 4);
@@ -83,8 +82,8 @@ void GameWidget::paintEvent(QPaintEvent *event) {
 
     painter.setFont(font);
 
-    //画笔设置为空，不绘制边框
-    painter.setPen(Qt::NoPen);
+
+
     int n = 4;
 
     for(int i = 0 ; i < n ; ++i) {

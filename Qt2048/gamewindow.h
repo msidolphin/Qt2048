@@ -26,6 +26,8 @@ private:
     QLabel *mTitleLabel;
     //分数面板
     QLabel *mScoreLabel;
+    //分数面板
+    QLabel *mHighScoreLabel;
 
     GameWidget *gameWidget;
 

@@ -6,9 +6,7 @@
 #include <QPaintEvent>
 #include <QLabel>
 #include <QKeyEvent>
-#include <QOpenGLWidget>
 
-//键盘方向
 enum Direct {
    Left,
    Right,
@@ -16,7 +14,7 @@ enum Direct {
    Down
 };
 
-class GameWidget : public QOpenGLWidget
+class GameWidget : public QWidget
 {
     Q_OBJECT
 public:
