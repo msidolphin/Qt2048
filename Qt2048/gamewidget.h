@@ -6,6 +6,7 @@
 #include <QPaintEvent>
 #include <QLabel>
 #include <QKeyEvent>
+#include <QOpenGLWidget>
 
 //键盘方向
 enum Direct {
@@ -15,17 +16,17 @@ enum Direct {
    Down
 };
 
-class GameWidget : public QWidget
+class GameWidget : public QOpenGLWidget
 {
     Q_OBJECT
-
+public:
+    //分数
+    int    score;
 public:
     GameWidget(QWidget *parent = 0);
     ~GameWidget();
-    //void paintEvent();
-protected:
     void paintEvent(QPaintEvent *event);
-    void keyPressEvent(QKeyEvent *event);
+    void move(Direct direct);
 private:
     QMap<QString, QColor> backgroundColor;
 
@@ -33,22 +34,14 @@ private:
     int border[4][4];
     double w = 30, h = 30;
     double rx, ry;
-    //分数
-    int    score;
 
 private:
     void random(int count, int value);
-    void move(Direct direct);
     bool canMove();
     int  random();
     int merge(int * array, int n);
-private slots:
-    //分数改变
-    void onScoreIncr(int incre);
-    //游戏结束(失败)
-    void onGameOver();
-    //游戏胜利
-    void onWin();
+signals:
+    void scoreIncre(int);
 };
 
 #endif // GAMEWIDGET_H

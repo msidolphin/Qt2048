@@ -19,7 +19,7 @@ using namespace std;
 
 
 GameWidget::GameWidget(QWidget *parent)
-    : QWidget(parent)
+    : QOpenGLWidget(parent)
 {
     srand(time(nullptr));
 
@@ -162,7 +162,7 @@ void GameWidget::move(Direct direct)
                 }
             }
             if(flag) {
-                merge(temp, num);
+                score += merge(temp, num);
                 for(int j = 0 ; j < 4 ; ++j) {
                     if(temp[j] != 0) {
                         border[j][i] = temp[j];
@@ -182,7 +182,7 @@ void GameWidget::move(Direct direct)
                 }
             }
             if(flag) {
-                merge(temp, num);
+                score += merge(temp, num);
                 for(int j = 3 ; j >= 0 ; --j) {
                     if(temp[3 - j] != 0) {
                         border[j][i] = temp[3 - j];
@@ -201,7 +201,7 @@ void GameWidget::move(Direct direct)
                 }
             }
             if(flag) {
-                merge(temp, num);
+                score += merge(temp, num);
                 //由于是向左，所以是以列的正向
                 for(int j = 0 ; j < 4 ; ++j) {
                     if(temp[j] != 0) {
@@ -221,7 +221,7 @@ void GameWidget::move(Direct direct)
                 }
             }
             if(flag) {
-                merge(temp, num);
+                score += merge(temp, num);
                 for(int j = 3 ; j >= 0 ; --j) {
                     if(temp[3 - j] != 0) {
                         border[i][j] = temp[3 - j];
@@ -232,6 +232,10 @@ void GameWidget::move(Direct direct)
             }
             break;
         }
+        //
+        emit scoreIncre(score);
+
+
         //重新将temp数组初始化为0
         memset(temp, 0, 4 * sizeof(int));
     }
@@ -329,46 +333,4 @@ int GameWidget::merge(int *array, int n)
     return score;
 }
 
-void GameWidget::onScoreIncr(int incre)
-{
-
-}
-
-void GameWidget::onGameOver()
-{
-
-}
-
-void GameWidget::onWin()
-{
-
-}
-
-
-/**
- * 处理键盘事件 up down left right
- * @brief GameWidget::keyPressEvent
- * @param event
- */
-void GameWidget::keyPressEvent(QKeyEvent *event)
-{
-    if(event->type() == QEvent::KeyPress) {
-        event->accept();
-        switch (event->key()) {
-        case Qt::Key_Up:
-            move(Direct::Up);
-            break;
-        case Qt::Key_Down:
-            move(Direct::Down);
-            break;
-        case Qt::Key_Left:
-            move(Direct::Left);
-            break;
-        case Qt::Key_Right:
-            move(Direct::Right);
-            break;
-        }
-    }
-
-}
 

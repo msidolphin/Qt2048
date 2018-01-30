@@ -31,4 +31,4 @@
 *.out
 *.app
 
-/Debug
+/Qt2048/Debug

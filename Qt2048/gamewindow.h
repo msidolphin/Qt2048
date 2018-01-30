@@ -4,6 +4,9 @@
 #include <QWidget>
 #include <QPushButton>
 #include <QLabel>
+#include <QKeyEvent>
+#include <QObject>
+#include <QEvent>
 #include "gamewidget.h"
 
 class GameWindow : public QWidget
@@ -13,6 +16,7 @@ class GameWindow : public QWidget
 public:
     GameWindow(QWidget *parent = 0);
     ~GameWindow();
+    void keyPressEvent(QKeyEvent *event);
 private:
     //重新开始按钮
     QPushButton *mResetBtn;
@@ -26,6 +30,13 @@ private:
     GameWidget *gameWidget;
 
     int score;
+private slots:
+    //分数改变
+    void onScoreIncre(int score);
+    //游戏结束(失败)
+    void onGameOver();
+    //游戏胜利
+    void onWin();
 };
 
 #endif // GAMEWINDOW_H
