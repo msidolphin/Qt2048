@@ -38,8 +38,8 @@ GameWidget::GameWidget(QWidget *parent)
     backgroundColor.insert(QString::number(1024),   QColor::fromRgb(0xaa, 0x66, 0xcc));
     backgroundColor.insert(QString::number(2048),   QColor::fromRgb(0x99, 0x33, 0xcc));
 
-    //初始化border为0
-    memset(border, 0, sizeof(int) * 16);
+    //初始化board为0
+    memset(board, 0, sizeof(int) * 16);
 
     //随机生成两个2个4
     random(2, 4);
@@ -82,20 +82,18 @@ void GameWidget::paintEvent(QPaintEvent *event) {
 
     painter.setFont(font);
 
-
-
     int n = 4;
 
     for(int i = 0 ; i < n ; ++i) {
         for(int j = 0 ; j < n ; ++j) {
             //绘制背景
-            brush.setColor(backgroundColor.value(QString::number(border[i][j])));
+            brush.setColor(backgroundColor.value(QString::number(board[i][j])));
             painter.setBrush(brush);
             painter.drawRoundedRect(QRectF(7 + (w + 5) * j, 7 + (h + 5)*i, w, h), 20, 20);
-            if(border[i][j] != 0) {
+            if(board[i][j] != 0) {
                 //绘制文字
                 painter.setPen(QColor::fromRgb(0, 0, 0));
-                painter.drawText(QRectF(7 + (w + 5) * j, 7 + (h + 5)*i, w, h), Qt::AlignCenter, QString::number(border[i][j]));
+                painter.drawText(QRectF(7 + (w + 5) * j, 7 + (h + 5)*i, w, h), Qt::AlignCenter, QString::number(board[i][j]));
                 painter.setPen(Qt::NoPen);
             }
         }
@@ -116,7 +114,7 @@ void GameWidget::random(int count, int value)
     //判断是否存在0
     for(int i = 0 ; i < 4 ; ++i) {
         for(int j = 0 ; j < 4 ; ++j) {
-            if(border[i][j] == 0) {
+            if(board[i][j] == 0) {
                 hasZero = true;
             }
         }
@@ -126,16 +124,16 @@ void GameWidget::random(int count, int value)
         while(count) {
             i = rand() % 4;
             j = rand() % 4;
-            if(border[i][j] == 0) {
+            if(board[i][j] == 0) {
                 count--;
-                border[i][j] = value;
+                board[i][j] = value;
             }
         }
     }
 }
 
 /**
- * 移动border矩阵，重写绘制
+ * 移动board矩阵，重写绘制
  * @brief GameWidget::move
  * @param direct
  */
@@ -154,8 +152,8 @@ void GameWidget::move(Direct direct)
         switch (direct){
         case Direct::Up:
             for(int j = 0 ; j < 4 ; ++j) {
-                if(border[j][i] != 0) {
-                    temp[index++] = border[j][i];
+                if(board[j][i] != 0) {
+                    temp[index++] = board[j][i];
                     num++;
                     flag = true;
                 }
@@ -164,9 +162,9 @@ void GameWidget::move(Direct direct)
                 score += merge(temp, num);
                 for(int j = 0 ; j < 4 ; ++j) {
                     if(temp[j] != 0) {
-                        border[j][i] = temp[j];
+                        board[j][i] = temp[j];
                     }else {
-                        border[j][i] = 0;
+                        board[j][i] = 0;
                     }
                 }
                 break;
@@ -174,8 +172,8 @@ void GameWidget::move(Direct direct)
             break;
         case Direct::Down:
             for(int j = 3 ; j >= 0 ; --j) {
-                if(border[j][i] != 0) {
-                    temp[index++] = border[j][i];
+                if(board[j][i] != 0) {
+                    temp[index++] = board[j][i];
                     num++;
                     flag = true;
                 }
@@ -184,17 +182,17 @@ void GameWidget::move(Direct direct)
                 score += merge(temp, num);
                 for(int j = 3 ; j >= 0 ; --j) {
                     if(temp[3 - j] != 0) {
-                        border[j][i] = temp[3 - j];
+                        board[j][i] = temp[3 - j];
                     }else {
-                        border[j][i] = 0;
+                        board[j][i] = 0;
                     }
                 }
             }
             break;
         case Direct::Left:
             for(int j = 0 ; j < 4 ; ++j) {
-                if(border[i][j] != 0) {
-                    temp[index++] = border[i][j];
+                if(board[i][j] != 0) {
+                    temp[index++] = board[i][j];
                     num++;
                     flag = true;
                 }
@@ -204,17 +202,17 @@ void GameWidget::move(Direct direct)
                 //由于是向左，所以是以列的正向
                 for(int j = 0 ; j < 4 ; ++j) {
                     if(temp[j] != 0) {
-                        border[i][j] = temp[j];
+                        board[i][j] = temp[j];
                     }else {
-                        border[i][j] = 0;
+                        board[i][j] = 0;
                     }
                 }
             }
             break;
         case Direct::Right:
             for(int j = 3 ; j >= 0 ; --j) {
-                if(border[i][j] != 0) {
-                    temp[index++] = border[i][j];
+                if(board[i][j] != 0) {
+                    temp[index++] = board[i][j];
                     num++;
                     flag = true;
                 }
@@ -223,28 +221,58 @@ void GameWidget::move(Direct direct)
                 score += merge(temp, num);
                 for(int j = 3 ; j >= 0 ; --j) {
                     if(temp[3 - j] != 0) {
-                        border[i][j] = temp[3 - j];
+                        board[i][j] = temp[3 - j];
                     }else {
-                        border[i][j] = 0;
+                        board[i][j] = 0;
                     }
                 }
             }
             break;
         }
-        //
+
+        //发出分数更新信号
         emit scoreIncre(score);
 
+        if(score == 2048 && !isWin) {
+#ifdef DEBUG
+        qDebug() << "游戏胜利";
+#endif
+            //胜利
+            gameOver(true);
+            isWin = true;
+            return;
+        }
 
         //重新将temp数组初始化为0
         memset(temp, 0, 4 * sizeof(int));
     }
 
-
-
     //随机生成一个2
     random(1, 2);
 
     //重新绘制
+    update();
+
+    //检查是否还能移动
+    if(!canMove() && !isFailed) {
+#ifdef DEBUG
+        qDebug() << "游戏失败";
+#endif
+        emit gameOver(false);
+        isFailed = true;
+    }
+}
+
+void GameWidget::reset()
+{
+    //当前分数清零
+    score = 0;
+    //发送信号
+    emit scoreIncre(score);
+    isWin = false;
+    isFailed = false;
+    memset(board, 0, ORDER*ORDER*sizeof(int));
+    random(2, 4);
     update();
 }
 
@@ -260,10 +288,10 @@ bool GameWidget::canMove()
     //获取每一行的数值
     for(int i = 0 ; i < 4 ; ++i) {
         for(int j = 0 ; j < 4 ; ++j) {
-            if(border[i][j] == 0) {
+            if(board[i][j] == 0) {
                 return true;
             }
-            temp[j] = border[i][j];
+            temp[j] = board[i][j];
         }
         if(merge(temp, 4) > 0) {
             return true;
@@ -272,10 +300,10 @@ bool GameWidget::canMove()
     //获取每一列
     for(int i = 0 ; i < 4 ; ++i) {
         for(int j = 0 ; j < 4 ; ++j) {
-            if(border[j][i] == 0) {
+            if(board[j][i] == 0) {
                 return true;
             }
-            temp[j] = border[j][i];
+            temp[j] = board[j][i];
         }
         if(merge(temp, 4) > 0) {
             return true;

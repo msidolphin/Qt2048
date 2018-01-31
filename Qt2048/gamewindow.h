@@ -33,12 +33,12 @@ private:
 
     int score;
 private slots:
-    //分数改变
+    /* 分数改变 */
     void onScoreIncre(int score);
-    //游戏结束(失败)
-    void onGameOver();
-    //游戏胜利
-    void onWin();
+    /* 游戏结束 */
+    void onGameOver(bool isWin);
+    /* 重置游戏 */
+    void onGameReset();
 };
 
 #endif // GAMEWINDOW_H

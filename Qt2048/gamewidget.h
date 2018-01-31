@@ -7,6 +7,9 @@
 #include <QLabel>
 #include <QKeyEvent>
 
+//#define DEBUG
+#define ORDER 4
+
 enum Direct {
    Left,
    Right,
@@ -25,13 +28,19 @@ public:
     ~GameWidget();
     void paintEvent(QPaintEvent *event);
     void move(Direct direct);
+    void reset();
 private:
     QMap<QString, QColor> backgroundColor;
 
     //游戏面板
-    int border[4][4];
+    int board[4][4];
     double w = 30, h = 30;
     double rx, ry;
+
+    //是否胜利
+    bool isWin;
+    //是否失败
+    bool isFailed;
 
 private:
     void random(int count, int value);
@@ -40,6 +49,7 @@ private:
     int merge(int * array, int n);
 signals:
     void scoreIncre(int);
+    void gameOver(bool);
 };
 
 #endif // GAMEWIDGET_H

@@ -2,7 +2,9 @@
 #include <QFont>
 #include <QKeyEvent>
 #include <QDebug>
+#include <QCursor>
 #include <QPalette>
+#include <QMessageBox>
 
 GameWindow::GameWindow(QWidget *parent)
     : QWidget(parent)
@@ -30,19 +32,20 @@ GameWindow::GameWindow(QWidget *parent)
     mTitleLabel->setGeometry(20, 20, 300, 100);
     mTitleLabel->setStyleSheet(QString("QLabel {color: #756d65; border: 0px solid orange;border-radius: 0px;}"));
 
-    //重置按钮 TODO 自己实现 因为方向键影响聚焦
-
     mResetBtn = new QPushButton("NEW GAME", this);
     mResetBtn->setGeometry(300, 120, 150, 35);
     mResetBtn->setFont(font);
+    mResetBtn->setCursor(QCursor(Qt::PointingHandCursor));
     mResetBtn->setStyleSheet(QString("QPushButton {color: #fff;background: #917a63;border: %1px solid;border-radius: %2px;} QPushButton:pressed{color: white;background: orange;border: %1px solid darkgray;border-radius: %2px;}").arg(0).arg(5));
-    mResetBtn->setDisabled(true);
-    mResetBtn->unsetCursor();
+    //mResetBtn->setDisabled(true);
+    connect(mResetBtn, SIGNAL(clicked(bool)), this, SLOT(onGameReset()));
 
     gameWidget = new GameWidget(this);
     gameWidget->setGeometry((this->width() - 400) / 2 - 70, 200, 400, 400);
 
+    /* 分数增加 和 游戏结束 true - 胜利 false - 失败 */
     connect(gameWidget, SIGNAL(scoreIncre(int)), this, SLOT(onScoreIncre(int)));
+    connect(gameWidget, SIGNAL(gameOver(bool)),  this, SLOT(onGameOver(bool)));
 
     mScoreLabel = new QLabel(QString("Score:\n%1").arg(gameWidget->score), this);
     mScoreLabel->setGeometry(200, 20, 110, 70);
@@ -75,16 +78,16 @@ void GameWindow::keyPressEvent(QKeyEvent *event)
     if(event->type() == QEvent::KeyPress) {
         event->accept();
         switch (event->key()) {
-        case Qt::Key_Up:
+        case Qt::Key_W:
             gameWidget->move(Direct::Up);
             break;
-        case Qt::Key_Down:
+        case Qt::Key_S:
             gameWidget->move(Direct::Down);
             break;
-        case Qt::Key_Left:
+        case Qt::Key_A:
             gameWidget->move(Direct::Left);
             break;
-        case Qt::Key_Right:
+        case Qt::Key_D:
             gameWidget->move(Direct::Right);
             break;
         }
@@ -97,12 +100,18 @@ void GameWindow::onScoreIncre(int score)
     mScoreLabel->setText(QString("Score:\n%1").arg(score));
 }
 
-void GameWindow::onGameOver()
+void GameWindow::onGameOver(bool isWin)
 {
-
+    QMessageBox msgBox(this);
+    if(isWin) {
+        msgBox.setText("胜利!");
+    }else {
+        msgBox.setText("失败!");
+    }
+    msgBox.exec();
 }
 
-void GameWindow::onWin()
+void GameWindow::onGameReset()
 {
-
+    gameWidget->reset();
 }
