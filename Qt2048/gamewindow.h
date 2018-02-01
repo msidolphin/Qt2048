@@ -1,6 +1,8 @@
 ﻿#ifndef GAMEWINDOW_H
 #define GAMEWINDOW_H
 
+//#define DEBUG
+
 #include <QWidget>
 #include <QPushButton>
 #include <QLabel>

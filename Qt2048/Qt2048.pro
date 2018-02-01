@@ -26,8 +26,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         gamewindow.cpp \
-    gamewidget.cpp
+    gamewidget.cpp \
 
 HEADERS += \
         gamewindow.h \
-    gamewidget.h
+    gamewidget.h \

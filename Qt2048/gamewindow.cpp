@@ -37,7 +37,7 @@ GameWindow::GameWindow(QWidget *parent)
     mResetBtn->setFont(font);
     mResetBtn->setCursor(QCursor(Qt::PointingHandCursor));
     mResetBtn->setStyleSheet(QString("QPushButton {color: #fff;background: #917a63;border: %1px solid;border-radius: %2px;} QPushButton:pressed{color: white;background: orange;border: %1px solid darkgray;border-radius: %2px;}").arg(0).arg(5));
-    //mResetBtn->setDisabled(true);
+    mResetBtn->setDisabled(true);
     connect(mResetBtn, SIGNAL(clicked(bool)), this, SLOT(onGameReset()));
 
     gameWidget = new GameWidget(this);
@@ -59,7 +59,9 @@ GameWindow::GameWindow(QWidget *parent)
     mHighScoreLabel->setAlignment(Qt::AlignCenter);
     mHighScoreLabel->setStyleSheet(QString("QLabel {color: #fff;background: #bfae9e;border: %1px solid;border-radius: %2px;}").arg(0).arg(5));
 
-    this->setWindowTitle("2048");
+    mResetBtn->installEventFilter(this);
+
+    //this->setWindowTitle("2048");
     this->setFixedSize(500, 640);
 }
 
@@ -78,15 +80,19 @@ void GameWindow::keyPressEvent(QKeyEvent *event)
     if(event->type() == QEvent::KeyPress) {
         event->accept();
         switch (event->key()) {
+        case Qt::Key_Up:
         case Qt::Key_W:
             gameWidget->move(Direct::Up);
             break;
+        case Qt::Key_Down:
         case Qt::Key_S:
             gameWidget->move(Direct::Down);
             break;
+        case Qt::Key_Left:
         case Qt::Key_A:
             gameWidget->move(Direct::Left);
             break;
+        case Qt::Key_Right:
         case Qt::Key_D:
             gameWidget->move(Direct::Right);
             break;
@@ -94,6 +100,7 @@ void GameWindow::keyPressEvent(QKeyEvent *event)
     }
 
 }
+
 
 void GameWindow::onScoreIncre(int score)
 {
@@ -106,7 +113,7 @@ void GameWindow::onGameOver(bool isWin)
     if(isWin) {
         msgBox.setText("胜利!");
     }else {
-        msgBox.setText("失败!");
+        msgBox.setText("游戏结束!");
     }
     msgBox.exec();
 }

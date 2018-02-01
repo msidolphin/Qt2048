@@ -34,9 +34,9 @@ GameWidget::GameWidget(QWidget *parent)
     backgroundColor.insert(QString::number(64),     QColor::fromRgb(0xf6, 0x5e, 0x3b));
     backgroundColor.insert(QString::number(128),    QColor::fromRgb(0xed, 0xcf, 0x72));
     backgroundColor.insert(QString::number(256),    QColor::fromRgb(0xed, 0xcc, 0x61));
-    backgroundColor.insert(QString::number(512),    QColor::fromRgb(0x99, 0xcc, 0x00));
-    backgroundColor.insert(QString::number(1024),   QColor::fromRgb(0xaa, 0x66, 0xcc));
-    backgroundColor.insert(QString::number(2048),   QColor::fromRgb(0x99, 0x33, 0xcc));
+    backgroundColor.insert(QString::number(512),    QColor::fromRgb(0xed, 0xc8, 0x50));
+    backgroundColor.insert(QString::number(1024),   QColor::fromRgb(0xed, 0xc5, 0x3f));
+    backgroundColor.insert(QString::number(2048),   QColor::fromRgb(0xed, 0xc2, 0x2e));
 
     //初始化board为0
     memset(board, 0, sizeof(int) * 16);
@@ -63,6 +63,9 @@ GameWidget::~GameWidget()
 void GameWidget::paintEvent(QPaintEvent *event) {
 
     QPainter painter(this);
+
+    //开启抗锯齿
+    painter.setRenderHint(QPainter::Antialiasing, true);
 
     //画笔设置为空，不绘制边框
     painter.setPen(Qt::NoPen);
@@ -98,6 +101,7 @@ void GameWidget::paintEvent(QPaintEvent *event) {
             }
         }
     }
+    return QWidget::paintEvent(event);
 }
 
 /**
@@ -312,10 +316,6 @@ bool GameWidget::canMove()
     return false;
 }
 
-int GameWidget::random()
-{
-
-}
 
 /**
  * 合并数组，该数组元素为矩阵中某一行或某一列中所有不为0的元素
