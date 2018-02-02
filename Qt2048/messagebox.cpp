@@ -50,14 +50,7 @@ MessageBox::MessageBox(QWidget *parent) : QDialog(parent)
     //以模态框的形式展示
     this->setWindowModality(Qt::WindowModal);
 
-    //设置居中
-    if(parent) {
-        QDesktopWidget *desktop = QApplication::desktop();
-        this->move(((desktop->width() - this->width()) /2 - 50), ((desktop->height() - this->height()) /2 -50));
-    }
-
     initConnection();
-
 }
 
 void MessageBox::setMessage(const QString &text)
