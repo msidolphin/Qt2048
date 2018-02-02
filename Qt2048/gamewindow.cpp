@@ -4,12 +4,15 @@
 #include <QDebug>
 #include <QCursor>
 #include <QPalette>
+#include <QFile>
 #include <QMessageBox>
+#include <QSettings>
+#include <QVariant>
+#include "qfilehelper.h"
 
 GameWindow::GameWindow(QWidget *parent)
     : QWidget(parent)
 {
-
     //设置背景色
     QPalette pal = palette();
     pal.setColor(QPalette::Background, QColor("#FAF8F0"));
@@ -46,6 +49,8 @@ GameWindow::GameWindow(QWidget *parent)
     /* 分数增加 和 游戏结束 true - 胜利 false - 失败 */
     connect(gameWidget, SIGNAL(scoreIncre(int)), this, SLOT(onScoreIncre(int)));
     connect(gameWidget, SIGNAL(gameOver(bool)),  this, SLOT(onGameOver(bool)));
+    connect(gameWidget, SIGNAL(highScoreUpdate(int)), this, SLOT(onHighScoreUpdate(int)));
+    connect(this, SIGNAL(saveHighScore()), gameWidget, SLOT(onClosed()));
 
     mScoreLabel = new QLabel(QString("Score:\n%1").arg(gameWidget->score), this);
     mScoreLabel->setGeometry(200, 20, 110, 70);
@@ -53,7 +58,7 @@ GameWindow::GameWindow(QWidget *parent)
     mScoreLabel->setAlignment(Qt::AlignCenter);
     mScoreLabel->setStyleSheet(QString("QLabel {color: #fff;background: #bfae9e;border: %1px solid;border-radius: %2px;}").arg(0).arg(5));
 
-    mHighScoreLabel = new QLabel(QString("High Score:\n%1").arg(gameWidget->score), this);
+    mHighScoreLabel = new QLabel(QString("High Score:\n%1").arg(gameWidget->highScore), this);
     mHighScoreLabel->setGeometry(320, 20, 140, 70);
     mHighScoreLabel->setFont(font);
     mHighScoreLabel->setAlignment(Qt::AlignCenter);
@@ -106,26 +111,40 @@ void GameWindow::keyPressEvent(QKeyEvent *event)
 
 }
 
+void GameWindow::closeEvent(QCloseEvent *event)
+{
+    emit saveHighScore();
+    return QWidget::closeEvent(event);
+}
+
 
 void GameWindow::onScoreIncre(int score)
 {
     mScoreLabel->setText(QString("Score:\n%1").arg(score));
 }
 
+void GameWindow::onHighScoreUpdate(int score)
+{
+    this->mHighScoreLabel->setText(QString("High Score:\n%1").arg(score));
+}
+
 void GameWindow::onGameOver(bool isWin)
 {
     if(isWin) {
         this->messageBox->setMessage("VICTORY!");
+        this->messageBox->setModel(Model::SUCCESS);
         this->messageBox->show();
 
     }else {
         this->messageBox->setMessage("GAME OVER");
+        this->messageBox->setModel(Model::FAILED);
         this->messageBox->show();
     }
 }
 
 void GameWindow::onGameReset()
 {
+    emit saveHighScore();
     gameWidget->reset();
 }
 
@@ -136,6 +155,7 @@ void GameWindow::onContinue()
 
 void GameWindow::onReset()
 {
+    emit saveHighScore();
     this->messageBox->hide();
     this->gameWidget->reset();
 }

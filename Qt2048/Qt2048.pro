@@ -27,9 +27,11 @@ SOURCES += \
         main.cpp \
         gamewindow.cpp \
     gamewidget.cpp \
-    messagebox.cpp
+    messagebox.cpp \
+    qfilehelper.cpp
 
 HEADERS += \
         gamewindow.h \
     gamewidget.h \
-    messagebox.h
+    messagebox.h \
+    qfilehelper.h

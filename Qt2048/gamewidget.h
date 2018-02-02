@@ -5,6 +5,7 @@
 #include <QPushButton>
 #include <QPaintEvent>
 #include <QLabel>
+#include <QSettings>
 #include <QKeyEvent>
 
 //#define DEBUG
@@ -22,7 +23,8 @@ class GameWidget : public QWidget
     Q_OBJECT
 public:
     //分数
-    int    score;
+    int score;
+    int highScore;
 public:
     GameWidget(QWidget *parent = 0);
     ~GameWidget();
@@ -42,6 +44,11 @@ private:
     //是否失败
     bool isFailed;
 
+    //最大分数是否改变
+    bool isHighScoreChanged;
+
+    QSettings *mSettings;
+
 private:
     void random(int count, int value);
     bool canMove();
@@ -49,7 +56,11 @@ private:
     int merge(int * array, int n);
 signals:
     void scoreIncre(int);
+    void highScoreUpdate(int);
     void gameOver(bool);
+public slots:
+    //关闭时保存槽函数
+    void onClosed();
 };
 
 #endif // GAMEWIDGET_H

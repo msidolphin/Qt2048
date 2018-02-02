@@ -10,14 +10,29 @@
 #include <QDebug>
 #include <ctime>
 #include <random>
+#include "qfilehelper.h"
 
 GameWidget::GameWidget(QWidget *parent)
-    : QWidget(parent)
+    : QWidget(parent),
+    isHighScoreChanged(false),
+    isWin(false),
+    isFailed(false)
 {
     srand(time(nullptr));
 
     //分数初始化为0
     score = 0;
+
+    this->mSettings = QFileHelper::openIniFile("high_score.ini");
+    QVariant val = this->mSettings->value("highScore");
+    if(val.isNull()) {
+        this->mSettings->setValue("highScore", QVariant(0));
+        this->highScore = 0;
+    }else {
+        this->highScore = val.toInt();
+    }
+    //发送信号
+    emit highScoreUpdate(highScore);
 
     //设置背景色
     QPalette pal = palette();
@@ -236,6 +251,11 @@ void GameWidget::move(Direct direct)
 
         //发出分数更新信号
         emit scoreIncre(score);
+        if(this->score > this->highScore) {
+            this->isHighScoreChanged = true;
+            this->highScore = this->score;
+            emit highScoreUpdate(this->highScore);
+        }
 
         if(score == 2048 && !isWin) {
 #ifdef DEBUG
@@ -358,6 +378,13 @@ int GameWidget::merge(int *array, int n)
         }
     }
     return score;
+}
+
+void GameWidget::onClosed()
+{
+    if(this->isHighScoreChanged) {
+        this->mSettings->setValue("highScore", QVariant(this->highScore));
+    }
 }
 
 
