@@ -7,15 +7,16 @@
 #include <QLabel>
 #include <QSettings>
 #include <QKeyEvent>
+#include <QList>
 
 //#define DEBUG
 #define ORDER 4
 
 enum Direct {
-   Left,
-   Right,
-   Up,
-   Down
+   Left  = 0x0,
+   Right = 0x1,
+   Up    = 0x2,
+   Down  = 0x3
 };
 
 class GameWidget : public QWidget
@@ -36,6 +37,9 @@ private:
 
     //游戏面板
     int board[4][4];
+
+    bool isMerge[4][4];
+
     double w = 30, h = 30;
     double rx, ry;
 
@@ -44,16 +48,22 @@ private:
     //是否失败
     bool isFailed;
 
+    //是否移动过
+    bool isMove;
+
     //最大分数是否改变
-    bool isHighScoreChanged;
+    bool isHighScoreUpdate;
 
     QSettings *mSettings;
-
 private:
-    void random(int count, int value);
+    void random(int count);
     bool canMove();
-    int  random();
     int merge(int * array, int n);
+    void initBoard();
+    void clearIsMerge();
+    void updateScore();
+    void loadHighScore();
+    void initComponent();
 signals:
     void scoreIncre(int);
     void highScoreUpdate(int);

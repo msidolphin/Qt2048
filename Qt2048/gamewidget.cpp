@@ -9,30 +9,22 @@
 #include <QEvent>
 #include <QDebug>
 #include <ctime>
+#include <cstdio>
 #include <random>
+#include <iostream>
 #include "qfilehelper.h"
 
+using namespace std;
+
 GameWidget::GameWidget(QWidget *parent)
-    : QWidget(parent),
-    isHighScoreChanged(false),
-    isWin(false),
-    isFailed(false)
+    : QWidget(parent)
 {
     srand(time(nullptr));
 
     //分数初始化为0
     score = 0;
 
-    this->mSettings = QFileHelper::openIniFile("high_score.ini");
-    QVariant val = this->mSettings->value("highScore");
-    if(val.isNull()) {
-        this->mSettings->setValue("highScore", QVariant(0));
-        this->highScore = 0;
-    }else {
-        this->highScore = val.toInt();
-    }
-    //发送信号
-    emit highScoreUpdate(highScore);
+    loadHighScore();
 
     //设置背景色
     QPalette pal = palette();
@@ -53,20 +45,36 @@ GameWidget::GameWidget(QWidget *parent)
     backgroundColor.insert(QString::number(1024),   QColor::fromRgb(0xed, 0xc5, 0x3f));
     backgroundColor.insert(QString::number(2048),   QColor::fromRgb(0xed, 0xc2, 0x2e));
 
-    //初始化board为0
-    memset(board, 0, sizeof(int) * 16);
+    initComponent();
 
-    //随机生成两个2个4
-    random(2, 4);
-
-    resize(400, 400);
-    //先固定大小
-    setFixedSize(this->width(), this->height());
 }
 
 GameWidget::~GameWidget()
 {
 
+}
+
+void GameWidget::loadHighScore()
+{
+    this->mSettings = QFileHelper::openIniFile("high_score.ini");
+    QVariant val = this->mSettings->value("highScore");
+    if(val.isNull()) {
+        this->mSettings->setValue("highScore", QVariant(0));
+        this->highScore = 0;
+    }else {
+        this->highScore = val.toInt();
+    }
+    //发送信号
+    emit highScoreUpdate(highScore);
+}
+
+void GameWidget::initComponent()
+{
+    initBoard();
+    random(2);
+    resize(400, 400);
+    //先固定大小
+    setFixedSize(this->width(), this->height());
 }
 
 
@@ -100,18 +108,16 @@ void GameWidget::paintEvent(QPaintEvent *event) {
 
     painter.setFont(font);
 
-    int n = 4;
-
-    for(int i = 0 ; i < n ; ++i) {
-        for(int j = 0 ; j < n ; ++j) {
+    for(int i = 0 ; i < ORDER ; ++i) {
+        for(int j = 0 ; j < ORDER ; ++j) {
             //绘制背景
-            brush.setColor(backgroundColor.value(QString::number(board[i][j])));
+            brush.setColor(backgroundColor.value(QString::number(this->board[i][j])));
             painter.setBrush(brush);
             painter.drawRoundedRect(QRectF(7 + (w + 5) * j, 7 + (h + 5)*i, w, h), 20, 20);
-            if(board[i][j] != 0) {
+            if(this->board[i][j] != 0) {
                 //绘制文字
                 painter.setPen(QColor::fromRgb(0, 0, 0));
-                painter.drawText(QRectF(7 + (w + 5) * j, 7 + (h + 5)*i, w, h), Qt::AlignCenter, QString::number(board[i][j]));
+                painter.drawText(QRectF(7 + (w + 5) * j, 7 + (h + 5)*i, w, h), Qt::AlignCenter, QString::number(this->board[i][j]));
                 painter.setPen(Qt::NoPen);
             }
         }
@@ -120,32 +126,40 @@ void GameWidget::paintEvent(QPaintEvent *event) {
 }
 
 /**
- * 随机数
+ * 以8:1 的比例随机生成2和4
  * @brief GameWidget::random
+ * @param count 随机生成个数
  */
-void GameWidget::random(int count, int value)
+void GameWidget::random(int count)
 {
-    int i = 0;
-    int j = 0;
-
     bool hasZero = false;
-
     //判断是否存在0
     for(int i = 0 ; i < 4 ; ++i) {
         for(int j = 0 ; j < 4 ; ++j) {
-            if(board[i][j] == 0) {
+            if(this->board[i][j] == 0) {
                 hasZero = true;
             }
         }
     }
-
     if(hasZero) {
+        int col = -1;
+        int row = -1;
+        int r;
         while(count) {
-            i = rand() % 4;
-            j = rand() % 4;
-            if(board[i][j] == 0) {
-                count--;
-                board[i][j] = value;
+            int colTmp = rand() % 4;
+            int rowTmp = rand() % 4;
+            if(colTmp != col && rowTmp != row) {
+                col = colTmp;
+                row = rowTmp;
+                if(this->board[row][col] == 0) {
+                    r = (rand() % 100) + 1; // 1 - 100
+                    if(r > 0 && r <= 80) {
+                        this->board[row][col] = 2;
+                    }else if(r > 80 && r <= 100) {
+                        this->board[row][col] = 4;
+                    }
+                    count --;
+                }
             }
         }
     }
@@ -158,133 +172,135 @@ void GameWidget::random(int count, int value)
  */
 void GameWidget::move(Direct direct)
 {
-    int temp[4];
-
-    memset(temp, 0, 4 * sizeof(int));
-
-    int num = 0;
-
-    for(int i = 0 ; i < 4 ; ++i) {
-        num = 0;
-        int index = 0;
-        bool flag = false;
         switch (direct){
         case Direct::Up:
-            for(int j = 0 ; j < 4 ; ++j) {
-                if(board[j][i] != 0) {
-                    temp[index++] = board[j][i];
-                    num++;
-                    flag = true;
-                }
-            }
-            if(flag) {
-                score += merge(temp, num);
-                for(int j = 0 ; j < 4 ; ++j) {
-                    if(temp[j] != 0) {
-                        board[j][i] = temp[j];
+            for(int i = 0 ; i < ORDER ; ++i) {
+                int j = 0;
+                for(int k = 0 ; k < ORDER ; ++k) {
+                    while(k < ORDER && this->board[k][i] == 0) k++;
+                    if(k >= ORDER) {
+                        break;
+                    }
+                    if(k != j && this->board[j][i] == 0) {
+                        this->isMove = true;
+                        this->board[j][i] = this->board[k][i];
+                        this->board[k][i] = 0;
+                    }
+                    if(j > 0 && this->board[j][i] == this->board[j-1][i] && !this->isMerge[j-1][i]) {
+                        this->isMove = true;
+                        this->board[j-1][i] *= 2;
+                        this->board[j][i] = 0;
+                        this->isMerge[j-1][i] = true;
+                        score += this->board[j-1][i];
+                        updateScore();
                     }else {
-                        board[j][i] = 0;
+                        j++;
                     }
                 }
-                break;
             }
             break;
         case Direct::Down:
-            for(int j = 3 ; j >= 0 ; --j) {
-                if(board[j][i] != 0) {
-                    temp[index++] = board[j][i];
-                    num++;
-                    flag = true;
-                }
-            }
-            if(flag) {
-                score += merge(temp, num);
-                for(int j = 3 ; j >= 0 ; --j) {
-                    if(temp[3 - j] != 0) {
-                        board[j][i] = temp[3 - j];
+            for(int i = 0 ; i < ORDER ; ++i) {
+                int j = ORDER - 1;
+                for(int k = ORDER - 1 ; k >= 0 ; --k) {
+                    while(k >= 0 && this->board[k][i] == 0) k--;
+                    if(k < 0) {
+                        break;
+                    }
+                    if(k != j && this->board[j][i] == 0) {
+                        this->isMove = true;
+                        this->board[j][i] = this->board[k][i];
+                        this->board[k][i] = 0;
+                    }
+                    if(j < ORDER - 1 && this->board[j][i] == this->board[j+1][i] && !this->isMerge[j+1][i]) {
+                        this->isMove = true;
+                        this->board[j+1][i] *= 2;
+                        this->board[j][i] = 0;
+                        this->isMerge[j+1][i] = true;
+                        score += this->board[j+1][i];
+                        updateScore();
                     }else {
-                        board[j][i] = 0;
+                        j--;
                     }
                 }
             }
             break;
         case Direct::Left:
-            for(int j = 0 ; j < 4 ; ++j) {
-                if(board[i][j] != 0) {
-                    temp[index++] = board[i][j];
-                    num++;
-                    flag = true;
-                }
-            }
-            if(flag) {
-                score += merge(temp, num);
-                //由于是向左，所以是以列的正向
-                for(int j = 0 ; j < 4 ; ++j) {
-                    if(temp[j] != 0) {
-                        board[i][j] = temp[j];
+            for(int i = 0 ; i < ORDER ; ++i) {
+                int j = 0;
+                for(int k = 0 ; k < ORDER ; ++k) {
+                    while(k < ORDER && this->board[i][k] == 0) k++;
+                    if(k >= ORDER) {
+                        break;
+                    }
+                    if(k != j && this->board[i][j] == 0) {
+                        this->isMove = true;
+                        this->board[i][j] = this->board[i][k];
+                        this->board[i][k] = 0;
+                    }
+                    if(j > 0 && this->board[i][j] == this->board[i][j-1] && !this->isMerge[i][j-1]) {
+                        this->isMove = true;
+                        this->board[i][j-1] *= 2;
+                        this->board[i][j] = 0;
+                        this->isMerge[i][j-1] = true;
+                        score += this->board[i][j-1];
+                        updateScore();
                     }else {
-                        board[i][j] = 0;
+                        j++;
                     }
                 }
             }
             break;
         case Direct::Right:
-            for(int j = 3 ; j >= 0 ; --j) {
-                if(board[i][j] != 0) {
-                    temp[index++] = board[i][j];
-                    num++;
-                    flag = true;
-                }
-            }
-            if(flag) {
-                score += merge(temp, num);
-                for(int j = 3 ; j >= 0 ; --j) {
-                    if(temp[3 - j] != 0) {
-                        board[i][j] = temp[3 - j];
+            for(int i = 0 ; i < ORDER ; ++i) {
+                int j = ORDER - 1;
+                for(int k = ORDER - 1 ; k >= 0 ; --k) {
+                    while(k >= 0 && this->board[i][k] == 0) k--;
+                    if(k < 0) {
+                        break;
+                    }
+                    if(k != j && this->board[i][j] == 0) {
+                        this->isMove = true;
+                        this->board[i][j] = this->board[i][k];
+                        this->board[i][k] = 0;
+                    }
+                    if(j < ORDER - 1 && this->board[i][j] == this->board[i][j+1] && !this->isMerge[i][j+1]) {
+                        this->isMove = true;
+                        this->board[i][j+1] *= 2;
+                        this->board[i][j] = 0;
+                        this->isMerge[i][j+1] = true;
+                        score += this->board[i][j+1];
+                        updateScore();
                     }else {
-                        board[i][j] = 0;
+                        j--;
                     }
                 }
             }
             break;
-        }
+        }    
+    clearIsMerge();
 
-        //发出分数更新信号
-        emit scoreIncre(score);
-        if(this->score > this->highScore) {
-            this->isHighScoreChanged = true;
-            this->highScore = this->score;
-            emit highScoreUpdate(this->highScore);
-        }
-
-        if(score == 2048 && !isWin) {
-#ifdef DEBUG
-        qDebug() << "游戏胜利";
-#endif
-            //胜利
-            gameOver(true);
-            isWin = true;
-            return;
-        }
-
-        //重新将temp数组初始化为0
-        memset(temp, 0, 4 * sizeof(int));
+    if(this->isWin) {
+        return;
     }
 
-    //随机生成一个2
-    random(1, 2);
-
-    //重新绘制
-    update();
-
-    //检查是否还能移动
-    if(!canMove() && !isFailed) {
-#ifdef DEBUG
-        qDebug() << "游戏失败";
-#endif
-        emit gameOver(false);
-        isFailed = true;
+    //判断是否移动过
+    if(this->isMove) {
+        this->isMove = false;
+        random(1);
+        //重新绘制
+        update();
+        //检查是否还能移动
+        if(!canMove() && !isFailed) {
+    #ifdef DEBUG
+            qDebug() << "游戏失败";
+    #endif
+            emit gameOver(false);
+            isFailed = true;
+        }
     }
+
+
 }
 
 void GameWidget::reset()
@@ -296,7 +312,7 @@ void GameWidget::reset()
     isWin = false;
     isFailed = false;
     memset(board, 0, ORDER*ORDER*sizeof(int));
-    random(2, 4);
+    random(2);
     update();
 }
 
@@ -310,24 +326,24 @@ bool GameWidget::canMove()
     int temp[4];
     memset(temp, 0, 4 * sizeof(int));
     //获取每一行的数值
-    for(int i = 0 ; i < 4 ; ++i) {
-        for(int j = 0 ; j < 4 ; ++j) {
-            if(board[i][j] == 0) {
+    for(int i = 0 ; i < ORDER ; ++i) {
+        for(int j = 0 ; j < ORDER ; ++j) {
+            if(this->board[i][j] == 0) {
                 return true;
             }
-            temp[j] = board[i][j];
+            temp[j] = this->board[i][j];
         }
         if(merge(temp, 4) > 0) {
             return true;
         }
     }
     //获取每一列
-    for(int i = 0 ; i < 4 ; ++i) {
-        for(int j = 0 ; j < 4 ; ++j) {
-            if(board[j][i] == 0) {
+    for(int i = 0 ; i < ORDER ; ++i) {
+        for(int j = 0 ; j < ORDER ; ++j) {
+            if(this->board[j][i] == 0) {
                 return true;
             }
-            temp[j] = board[j][i];
+            temp[j] = this->board[j][i];
         }
         if(merge(temp, 4) > 0) {
             return true;
@@ -380,9 +396,45 @@ int GameWidget::merge(int *array, int n)
     return score;
 }
 
+void GameWidget::initBoard()
+{
+    for(int i = 0 ; i < ORDER ; ++i) {
+        for(int j = 0 ; j < ORDER ; ++j) {
+            this->board[i][j] = 0;
+        }
+    }
+}
+
+void GameWidget::clearIsMerge()
+{
+    for(int i = 0 ; i < ORDER ; ++i) {
+        for(int j = 0 ; j < ORDER ; ++j) {
+            this->isMerge[i][j] = false;
+        }
+    }
+}
+
+void GameWidget::updateScore()
+{
+    emit scoreIncre(this->score);
+    if(this->score > this->highScore) {
+        this->isHighScoreUpdate= true;
+        this->highScore = this->score;
+        emit highScoreUpdate(this->highScore);
+    }
+    if(score == 2048 && !isWin) {
+#ifdef DEBUG
+    qDebug() << "游戏胜利";
+#endif
+        //胜利
+        gameOver(true);
+        isWin = true;
+    }
+}
+
 void GameWidget::onClosed()
 {
-    if(this->isHighScoreChanged) {
+    if(this->isHighScoreUpdate) {
         this->mSettings->setValue("highScore", QVariant(this->highScore));
     }
 }
