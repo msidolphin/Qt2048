@@ -37,7 +37,7 @@ GameWindow::GameWindow(QWidget *parent)
     mResetBtn->setFont(font);
     mResetBtn->setCursor(QCursor(Qt::PointingHandCursor));
     mResetBtn->setStyleSheet(QString("QPushButton {color: #fff;background: #917a63;border: %1px solid;border-radius: %2px;} QPushButton:pressed{color: white;background: orange;border: %1px solid darkgray;border-radius: %2px;}").arg(0).arg(5));
-    mResetBtn->setDisabled(true);
+    mResetBtn->setDisabled(false);
     connect(mResetBtn, SIGNAL(clicked(bool)), this, SLOT(onGameReset()));
 
     gameWidget = new GameWidget(this);
@@ -61,7 +61,12 @@ GameWindow::GameWindow(QWidget *parent)
 
     mResetBtn->installEventFilter(this);
 
-    //this->setWindowTitle("2048");
+    this->messageBox = new MessageBox(this);
+    connect(this->messageBox, SIGNAL(continueBtnClicked()), this, SLOT(onContinue()));
+    connect(this->messageBox, SIGNAL(resetBtnClicked()), this, SLOT(onReset()));
+    this->messageBox->hide();
+
+    this->setWindowTitle("2048");
     this->setFixedSize(500, 640);
 }
 
@@ -109,16 +114,28 @@ void GameWindow::onScoreIncre(int score)
 
 void GameWindow::onGameOver(bool isWin)
 {
-    QMessageBox msgBox(this);
     if(isWin) {
-        msgBox.setText("胜利!");
+        this->messageBox->setMessage("VICTORY!");
+        this->messageBox->show();
+
     }else {
-        msgBox.setText("游戏结束!");
+        this->messageBox->setMessage("GAME OVER");
+        this->messageBox->show();
     }
-    msgBox.exec();
 }
 
 void GameWindow::onGameReset()
 {
     gameWidget->reset();
+}
+
+void GameWindow::onContinue()
+{
+    this->messageBox->hide();
+}
+
+void GameWindow::onReset()
+{
+    this->messageBox->hide();
+    this->gameWidget->reset();
 }

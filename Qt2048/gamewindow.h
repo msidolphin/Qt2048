@@ -10,6 +10,7 @@
 #include <QObject>
 #include <QEvent>
 #include "gamewidget.h"
+#include "messagebox.h"
 
 class GameWindow : public QWidget
 {
@@ -19,6 +20,8 @@ public:
     GameWindow(QWidget *parent = 0);
     ~GameWindow();
     void keyPressEvent(QKeyEvent *event);
+private:
+    void initLayout();
 private:
     //重新开始按钮
     QPushButton *mResetBtn;
@@ -33,6 +36,8 @@ private:
 
     GameWidget *gameWidget;
 
+    MessageBox *messageBox;
+
     int score;
 private slots:
     /* 分数改变 */
@@ -41,6 +46,8 @@ private slots:
     void onGameOver(bool isWin);
     /* 重置游戏 */
     void onGameReset();
+    void onContinue();
+    void onReset();
 };
 
 #endif // GAMEWINDOW_H

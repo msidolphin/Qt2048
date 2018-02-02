@@ -27,7 +27,9 @@ SOURCES += \
         main.cpp \
         gamewindow.cpp \
     gamewidget.cpp \
+    messagebox.cpp
 
 HEADERS += \
         gamewindow.h \
     gamewidget.h \
+    messagebox.h

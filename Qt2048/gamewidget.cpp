@@ -42,7 +42,7 @@ GameWidget::GameWidget(QWidget *parent)
     memset(board, 0, sizeof(int) * 16);
 
     //随机生成两个2个4
-    random(2, 4);
+    random(2, 1024);
 
     resize(400, 400);
     //先固定大小
