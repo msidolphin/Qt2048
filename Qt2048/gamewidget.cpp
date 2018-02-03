@@ -22,7 +22,11 @@ GameWidget::GameWidget(QWidget *parent)
     srand(time(nullptr));
 
     //分数初始化为0
-    score = 0;
+    this->score = 0;
+    this->isWin = false;
+    this->isHighScoreUpdate = false;
+    this->isMove = false;
+    this->rx = this->ry = 20;
 
     loadHighScore();
 
@@ -95,7 +99,7 @@ void GameWidget::paintEvent(QPaintEvent *event) {
 
     QBrush brush(QColor::fromRgb(141, 121, 81));
     painter.setBrush(brush);
-    painter.drawRect(2, 2, width() - 4, height() - 4);
+    painter.drawRoundedRect(QRect(2, 2, width() - 4, height() - 4), this->rx, this->ry);
 
     w = (width() - 4) - 25;
     w /= 4;
@@ -192,7 +196,7 @@ void GameWidget::move(Direct direct)
                         this->board[j][i] = 0;
                         this->isMerge[j-1][i] = true;
                         score += this->board[j-1][i];
-                        updateScore();
+                        updateScore(this->board[j-1][i]);
                     }else {
                         j++;
                     }
@@ -218,7 +222,7 @@ void GameWidget::move(Direct direct)
                         this->board[j][i] = 0;
                         this->isMerge[j+1][i] = true;
                         score += this->board[j+1][i];
-                        updateScore();
+                        updateScore(this->board[j+1][i]);
                     }else {
                         j--;
                     }
@@ -244,7 +248,7 @@ void GameWidget::move(Direct direct)
                         this->board[i][j] = 0;
                         this->isMerge[i][j-1] = true;
                         score += this->board[i][j-1];
-                        updateScore();
+                        updateScore(this->board[i][j-1]);
                     }else {
                         j++;
                     }
@@ -270,7 +274,7 @@ void GameWidget::move(Direct direct)
                         this->board[i][j] = 0;
                         this->isMerge[i][j+1] = true;
                         score += this->board[i][j+1];
-                        updateScore();
+                        updateScore(this->board[i][j+1]);
                     }else {
                         j--;
                     }
@@ -291,12 +295,11 @@ void GameWidget::move(Direct direct)
         //重新绘制
         update();
         //检查是否还能移动
-        if(!canMove() && !isFailed) {
+        if(!canMove()) {
     #ifdef DEBUG
             qDebug() << "游戏失败";
     #endif
             emit gameOver(false);
-            isFailed = true;
         }
     }
 
@@ -306,11 +309,11 @@ void GameWidget::move(Direct direct)
 void GameWidget::reset()
 {
     //当前分数清零
-    score = 0;
+    this->score = 0;
     //发送信号
     emit scoreIncre(score);
-    isWin = false;
-    isFailed = false;
+    this->isWin = false;
+    this->isHighScoreUpdate = false;
     memset(board, 0, ORDER*ORDER*sizeof(int));
     random(2);
     update();
@@ -414,7 +417,7 @@ void GameWidget::clearIsMerge()
     }
 }
 
-void GameWidget::updateScore()
+void GameWidget::updateScore(int mergeNumber)
 {
     emit scoreIncre(this->score);
     if(this->score > this->highScore) {
@@ -422,7 +425,7 @@ void GameWidget::updateScore()
         this->highScore = this->score;
         emit highScoreUpdate(this->highScore);
     }
-    if(score == 2048 && !isWin) {
+    if(mergeNumber == 2048 && !isWin) {
 #ifdef DEBUG
     qDebug() << "游戏胜利";
 #endif
