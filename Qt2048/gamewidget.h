@@ -8,7 +8,6 @@
 #include <QSettings>
 #include <QKeyEvent>
 #include <QPointF>
-#include <QList>
 
 //#define DEBUG
 #define ORDER 4
@@ -33,9 +32,8 @@ public:
     void paintEvent(QPaintEvent *event);
     void move(Direct direct);
     void reset();
+    void continuePlay();
 private:
-    QMap<QString, QColor> backgroundColor;
-
     //游戏面板
     int board[4][4];
 
@@ -61,11 +59,11 @@ private:
     void random(int count);
     bool canMove();
     int merge(int * array, int n);
-    void initBoard();
     void clearIsMerge();
     void updateScore(int mergetNumber);
     void loadHighScore();
     void initComponent();
+    QColor getBackgroundColor(int number);
 signals:
     void scoreIncre(int);
     void highScoreUpdate(int);

@@ -23,6 +23,8 @@ public:
     void keyPressEvent(QKeyEvent *event);
 private:
     void initLayout();
+    void initComponent();
+    void initConnection();
 protected:
     void closeEvent(QCloseEvent *event);
 private:

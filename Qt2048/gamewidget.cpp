@@ -5,13 +5,10 @@
 #include <QRectF>
 #include <QPalette>
 #include <QPaintEvent>
-#include <QMap>
 #include <QEvent>
 #include <QDebug>
 #include <ctime>
-#include <cstdio>
 #include <random>
-#include <iostream>
 #include "qfilehelper.h"
 
 using namespace std;
@@ -21,7 +18,6 @@ GameWidget::GameWidget(QWidget *parent)
 {
     srand(time(nullptr));
 
-    //分数初始化为0
     this->score = 0;
     this->isWin = false;
     this->isHighScoreUpdate = false;
@@ -29,28 +25,7 @@ GameWidget::GameWidget(QWidget *parent)
     this->rx = this->ry = 20;
 
     loadHighScore();
-
-    //设置背景色
-    QPalette pal = palette();
-    pal.setColor(QPalette::Background, QColor("#FAF8F0"));
-    setPalette(pal);
-
-    //初始化背景颜色
-    backgroundColor.insert(QString::number(0),      QColor::fromRgb(0xab, 0xa5, 0x8d));
-    backgroundColor.insert(QString::number(2),      QColor::fromRgb(0xee, 0xe4, 0xda));
-    backgroundColor.insert(QString::number(4),      QColor::fromRgb(0xed, 0xe0, 0xc8));
-    backgroundColor.insert(QString::number(8),      QColor::fromRgb(0xf2, 0xb1, 0x79));
-    backgroundColor.insert(QString::number(16),     QColor::fromRgb(0xf5, 0x95, 0x63));
-    backgroundColor.insert(QString::number(32),     QColor::fromRgb(0xf6, 0x7c, 0x5f));
-    backgroundColor.insert(QString::number(64),     QColor::fromRgb(0xf6, 0x5e, 0x3b));
-    backgroundColor.insert(QString::number(128),    QColor::fromRgb(0xed, 0xcf, 0x72));
-    backgroundColor.insert(QString::number(256),    QColor::fromRgb(0xed, 0xcc, 0x61));
-    backgroundColor.insert(QString::number(512),    QColor::fromRgb(0xed, 0xc8, 0x50));
-    backgroundColor.insert(QString::number(1024),   QColor::fromRgb(0xed, 0xc5, 0x3f));
-    backgroundColor.insert(QString::number(2048),   QColor::fromRgb(0xed, 0xc2, 0x2e));
-
     initComponent();
-
 }
 
 GameWidget::~GameWidget()
@@ -74,11 +49,51 @@ void GameWidget::loadHighScore()
 
 void GameWidget::initComponent()
 {
-    initBoard();
+    //设置背景色
+    QPalette pal = palette();
+    pal.setColor(QPalette::Background, QColor("#FAF8F0"));
+    setPalette(pal);
+    memset(this->board, 0, ORDER*ORDER*sizeof(int));
     random(2);
     resize(400, 400);
     //先固定大小
-    setFixedSize(this->width(), this->height());
+    setFixedSize(400, 400);
+}
+
+QColor GameWidget::getBackgroundColor(int number)
+{
+    switch (number) {
+    case 0:
+        return QColor(0xab, 0xa5, 0x8d);
+    case 2:
+        return QColor(0xee, 0xe4, 0xda);
+    case 4:
+        return QColor(0xed, 0xe0, 0xc8);
+    case 8:
+        return QColor(0xf2, 0xb1, 0x79);
+    case 16:
+        return QColor(0xf5, 0x95, 0x63);
+    case 32:
+        return QColor(0xf6, 0x7c, 0x5f);
+    case 64:
+        return QColor(0xf6, 0x5e, 0x3b);
+    case 128:
+        return QColor(0xed, 0xcf, 0x72);
+    case 256:
+        return QColor(0xed, 0xcc, 0x61);
+    case 512:
+        return QColor(0xed, 0xc8, 0x50);
+    case 1024:
+        return QColor(0xed, 0xc5, 0x3f);
+    case 2048:
+        return QColor(0xed, 0xc2, 0x2e);
+    case 4096:
+        return QColor(0xed, 0xc2, 0x2e);
+    case 8192:
+        return QColor(0xed, 0xc2, 0x2e);
+    default:
+        return QColor(0xed, 0xc2, 0x2e);
+    }
 }
 
 
@@ -115,7 +130,7 @@ void GameWidget::paintEvent(QPaintEvent *event) {
     for(int i = 0 ; i < ORDER ; ++i) {
         for(int j = 0 ; j < ORDER ; ++j) {
             //绘制背景
-            brush.setColor(backgroundColor.value(QString::number(this->board[i][j])));
+            brush.setColor(getBackgroundColor(QString::number(this->board[i][j]).toInt()));
             painter.setBrush(brush);
             painter.drawRoundedRect(QRectF(7 + (w + 5) * j, 7 + (h + 5)*i, w, h), 20, 20);
             if(this->board[i][j] != 0) {
@@ -170,39 +185,48 @@ void GameWidget::random(int count)
 }
 
 /**
- * 移动board矩阵，重写绘制
+ * 移动board矩阵
  * @brief GameWidget::move
  * @param direct
  */
 void GameWidget::move(Direct direct)
 {
+
         switch (direct){
         case Direct::Up:
+            //遍历每一列
             for(int i = 0 ; i < ORDER ; ++i) {
+                //j指向当前合并或移动终点
                 int j = 0;
                 for(int k = 0 ; k < ORDER ; ++k) {
+                    //k指向该列不为0的元素
                     while(k < ORDER && this->board[k][i] == 0) k++;
                     if(k >= ORDER) {
                         break;
                     }
+                    //仅当终点（j的指向的元素）为0时，才能将其后/前 的元素移动到该位置
                     if(k != j && this->board[j][i] == 0) {
                         this->isMove = true;
                         this->board[j][i] = this->board[k][i];
                         this->board[k][i] = 0;
                     }
+                    //如果j不为首元素/末元素，且j指向的元素和其前面/后面 的元素相同且未合并过，则可进行一次合并
                     if(j > 0 && this->board[j][i] == this->board[j-1][i] && !this->isMerge[j-1][i]) {
                         this->isMove = true;
                         this->board[j-1][i] *= 2;
                         this->board[j][i] = 0;
                         this->isMerge[j-1][i] = true;
                         score += this->board[j-1][i];
+                        //更新分数和检查是否胜利
                         updateScore(this->board[j-1][i]);
                     }else {
+                        //不能合并或者已经合并过，移动j指向下一个元素
                         j++;
                     }
                 }
             }
             break;
+        //同理
         case Direct::Down:
             for(int i = 0 ; i < ORDER ; ++i) {
                 int j = ORDER - 1;
@@ -314,9 +338,18 @@ void GameWidget::reset()
     emit scoreIncre(score);
     this->isWin = false;
     this->isHighScoreUpdate = false;
+    this->isMove = false;
+
     memset(board, 0, ORDER*ORDER*sizeof(int));
     random(2);
     update();
+}
+
+void GameWidget::continuePlay()
+{
+    if(this->isWin) {
+        this->isWin = false;
+    }
 }
 
 /**
@@ -399,15 +432,6 @@ int GameWidget::merge(int *array, int n)
     return score;
 }
 
-void GameWidget::initBoard()
-{
-    for(int i = 0 ; i < ORDER ; ++i) {
-        for(int j = 0 ; j < ORDER ; ++j) {
-            this->board[i][j] = 0;
-        }
-    }
-}
-
 void GameWidget::clearIsMerge()
 {
     for(int i = 0 ; i < ORDER ; ++i) {
@@ -441,5 +465,3 @@ void GameWidget::onClosed()
         this->mSettings->setValue("highScore", QVariant(this->highScore));
     }
 }
-
-

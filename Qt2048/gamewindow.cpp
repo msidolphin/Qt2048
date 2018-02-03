@@ -4,14 +4,24 @@
 #include <QDebug>
 #include <QCursor>
 #include <QPalette>
-#include <QFile>
 #include <QMessageBox>
 #include <QSettings>
 #include <QVariant>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
 #include "qfilehelper.h"
 
 GameWindow::GameWindow(QWidget *parent)
     : QWidget(parent)
+{
+    initComponent();
+    initConnection();
+    initLayout();
+    this->setWindowTitle("2048");
+    this->setFixedSize(QSize(420, 550));
+}
+
+void GameWindow::initComponent()
 {
     //设置背景色
     QPalette pal = palette();
@@ -23,56 +33,93 @@ GameWindow::GameWindow(QWidget *parent)
     font.setBold(true);
     font.setPixelSize(20);
 
+    //2048大标题字体
     QFont titleFont;
     titleFont.setFamily("Consolas");
     titleFont.setBold(true);
     titleFont.setPixelSize(65);
 
-    mTitleLabel = new QLabel("2048", this);
+    mTitleLabel = new QLabel("2048");
     mTitleLabel->setFont(titleFont);
 
     mTitleLabel->setAlignment(Qt::AlignLeft);
-    mTitleLabel->setGeometry(20, 20, 300, 100);
     mTitleLabel->setStyleSheet(QString("QLabel {color: #756d65; border: 0px solid orange;border-radius: 0px;}"));
 
-    mResetBtn = new QPushButton("NEW GAME", this);
-    mResetBtn->setGeometry(300, 120, 150, 35);
+    mResetBtn = new QPushButton("NEW GAME");
+    mResetBtn->setFixedWidth(150);
+    mResetBtn->setFixedHeight(40);
     mResetBtn->setFont(font);
     mResetBtn->setCursor(QCursor(Qt::PointingHandCursor));
     mResetBtn->setStyleSheet(QString("QPushButton {color: #fff;background: #917a63;border: %1px solid;border-radius: %2px;} QPushButton:pressed{color: white;background: orange;border: %1px solid darkgray;border-radius: %2px;}").arg(0).arg(5));
     mResetBtn->setDisabled(false);
     connect(mResetBtn, SIGNAL(clicked(bool)), this, SLOT(onGameReset()));
 
-    gameWidget = new GameWidget(this);
-    gameWidget->setGeometry((this->width() - 400) / 2 - 70, 200, 400, 400);
+    gameWidget = new GameWidget;
 
-    /* 分数增加 和 游戏结束 true - 胜利 false - 失败 */
-    connect(gameWidget, SIGNAL(scoreIncre(int)), this, SLOT(onScoreIncre(int)));
-    connect(gameWidget, SIGNAL(gameOver(bool)),  this, SLOT(onGameOver(bool)));
-    connect(gameWidget, SIGNAL(highScoreUpdate(int)), this, SLOT(onHighScoreUpdate(int)));
-    connect(this, SIGNAL(saveHighScore()), gameWidget, SLOT(onClosed()));
-
-    mScoreLabel = new QLabel(QString("Score:\n%1").arg(gameWidget->score), this);
-    mScoreLabel->setGeometry(200, 20, 110, 70);
+    mScoreLabel = new QLabel(QString("Score:\n%1").arg(gameWidget->score));
     mScoreLabel->setFont(font);
     mScoreLabel->setAlignment(Qt::AlignCenter);
     mScoreLabel->setStyleSheet(QString("QLabel {color: #fff;background: #bfae9e;border: %1px solid;border-radius: %2px;}").arg(0).arg(5));
 
-    mHighScoreLabel = new QLabel(QString("High Score:\n%1").arg(gameWidget->highScore), this);
-    mHighScoreLabel->setGeometry(320, 20, 140, 70);
+    mHighScoreLabel = new QLabel(QString("High Score:\n%1").arg(gameWidget->highScore));
+    mHighScoreLabel->setFixedWidth(140);
     mHighScoreLabel->setFont(font);
     mHighScoreLabel->setAlignment(Qt::AlignCenter);
     mHighScoreLabel->setStyleSheet(QString("QLabel {color: #fff;background: #bfae9e;border: %1px solid;border-radius: %2px;}").arg(0).arg(5));
 
-    mResetBtn->installEventFilter(this);
-
     this->messageBox = new MessageBox(this);
+    this->messageBox->hide();
+}
+
+/**
+ * 初始化连接
+ * @brief GameWindow::initConnection
+ */
+void GameWindow::initConnection()
+{
+
+    /**
+     * GameWidget
+     * scoreIncre(int)      分数新增信号
+     * gameOver(bool)       游戏结束信号
+     * highScoreUpdate(int) 更新最高分数信号
+     */
+    connect(gameWidget, SIGNAL(scoreIncre(int)), this, SLOT(onScoreIncre(int)));
+    connect(gameWidget, SIGNAL(gameOver(bool)),  this, SLOT(onGameOver(bool)));
+    connect(gameWidget, SIGNAL(highScoreUpdate(int)), this, SLOT(onHighScoreUpdate(int)));
+
+    /**
+     * GameWindow
+     * saveHighScore() 保存最高分数信号
+     */
+    connect(this, SIGNAL(saveHighScore()), gameWidget, SLOT(onClosed()));
+
+    /*
+     * 消息对话框
+     * continueBtnClicked() 继续按钮被按下信号
+     * resetBtnClicked()    重置按钮被按下信号
+     */
     connect(this->messageBox, SIGNAL(continueBtnClicked()), this, SLOT(onContinue()));
     connect(this->messageBox, SIGNAL(resetBtnClicked()), this, SLOT(onReset()));
-    this->messageBox->hide();
+}
 
-    this->setWindowTitle("2048");
-    this->setFixedSize(500, 640);
+/**
+ * 初始化布局
+ * @brief GameWindow::initLayout
+ */
+void GameWindow::initLayout()
+{
+    QHBoxLayout *topLayout = new QHBoxLayout;
+    topLayout->addWidget(this->mTitleLabel);
+    topLayout->addWidget(this->mScoreLabel);
+    topLayout->addWidget(this->mHighScoreLabel);
+
+    QVBoxLayout *mainLayout = new QVBoxLayout;
+    mainLayout->addLayout(topLayout);
+    mainLayout->addWidget(this->mResetBtn, 0, Qt::AlignRight);
+    mainLayout->addWidget(this->gameWidget);
+
+    this->setLayout(mainLayout);
 }
 
 GameWindow::~GameWindow()
@@ -150,6 +197,7 @@ void GameWindow::onGameReset()
 
 void GameWindow::onContinue()
 {
+    this->gameWidget->continuePlay();
     this->messageBox->hide();
 }
 
